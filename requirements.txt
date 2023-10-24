@@ -1,0 +1,4 @@
+click
+node-semver
+requests
+tqdm
