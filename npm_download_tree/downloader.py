@@ -1,3 +1,4 @@
+import functools
 import json
 from os.path import basename
 from pathlib import Path
@@ -8,7 +9,10 @@ from tqdm import tqdm
 from npm_download_tree.config import PACKAGES_OUTPATH
 from npm_download_tree.request_helper import session
 
-TT = tqdm(total=0)
+
+@functools.lru_cache()
+def get_tqdm():
+    return tqdm(total=0)
 
 
 def get_max_satisfying_version(version_require: str, versions: list[str]):
@@ -75,7 +79,7 @@ def dl_package_recursive(package: str, recurse_level: int = 3):
 
         if tarball_url:
             result.add(dl_package_tar(tarball_url, name, max_version))
-            TT.update()
+            get_tqdm().update()
         else:
             print("No tarball at", package_info_url)
             exit(1)
@@ -85,8 +89,8 @@ def dl_package_recursive(package: str, recurse_level: int = 3):
 
     if recurse_level > 0:
         deps: dict = {**content.get('dependencies', {}), **content.get('devDependencies', {})}
-        TT.total = TT.total + len(deps)
-        TT.refresh()
+        get_tqdm().total = get_tqdm().total + len(deps)
+        get_tqdm().refresh()
         for dep_name, dep_version in deps.items():
             if dep_version.startswith(("file:", "git+")):
                 continue
